@@ -18,26 +18,32 @@ const notificationClose = document.getElementById('notificationClose');
 const modalContainer = document.getElementById('modalContainer');
 const lastUpdateEl = document.getElementById('lastUpdate');
 
-// Utilidades UI
+const notificationIconWrapper = document.getElementById('notificationIconWrapper');
+
 function showNotification(msg, type = 'success') {
     notificationMsg.textContent = msg;
-    notificationIcon.setAttribute('data-lucide', type === 'success' ? 'check' : 'alert-circle');
-    lucide.createIcons();
+
+    const iconName = type === 'success' ? 'check-circle' : 'x-octagon';
+    const iconColor = type === 'success' ? 'text-green-600' : 'text-red-600';
+
+    notificationIconWrapper.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 ${iconColor}"></i>`;
+
+    if (window.lucide && typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+    }
 
     const el = notification.firstElementChild;
     el.classList.remove('translate-x-6', 'opacity-0');
     el.classList.add('-translate-x-0');
     notification.style.pointerEvents = 'auto';
     notification.classList.remove('opacity-0');
-
-    // animación: usamos transform/opacity en el wrapper para que sea suave
     notification.style.transition = 'transform 250ms ease, opacity 250ms ease';
     notification.style.transform = 'translateX(0)';
     notification.style.opacity = '1';
 
-    setTimeout(hideNotification, 3500);
+    if (notification._hideTimeout) clearTimeout(notification._hideTimeout);
+    notification._hideTimeout = setTimeout(hideNotification, 3500);
 }
-
 function hideNotification() {
     const el = notification.firstElementChild;
     if (!el) return;
@@ -50,12 +56,10 @@ function hideNotification() {
 
 notificationClose.addEventListener('click', hideNotification);
 
-// Modal con animación
 function openModal(mode, id = null) {
     state.formMode = mode;
     state.selected = state.productos.find(p => p.id === id) || null;
 
-    // overlay + panel
     modalContainer.innerHTML = `
             <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" tabindex="-1"></div>
             <div role="dialog" aria-modal="true" class="relative w-full max-w-md mx-auto">
@@ -177,7 +181,6 @@ function renderTable() {
     lucide.createIcons();
 }
 
-// Fetch & acciones (mismo flujo) — ligera mejora: debounce búsqueda, control estado
 let searchTimeout = null;
 async function fetchProductos(query = '') {
     state.loading = true;
@@ -197,30 +200,60 @@ async function fetchProductos(query = '') {
     } finally { state.loading = false; }
 }
 
-// CRUD (igual lógica, solo con notificaciones más suaves)
 async function addProduct() {
     const name = document.getElementById('formName').value.trim();
     const category = document.getElementById('formCategory').value.trim();
     const price = parseFloat(document.getElementById('formPrice').value);
     const stock = parseInt(document.getElementById('formStock').value);
-    if (!name || !category || isNaN(price) || price <= 0 || isNaN(stock) || stock < 0) { showNotification('Complete correctamente los campos', 'error'); return; }
+
+    if (!name) {
+        showNotification('El nombre del producto es obligatorio.', 'error');
+        return;
+    } else if (!category) {
+        showNotification('La categoría del producto es obligatoria.', 'error');
+        return;
+    } else if (isNaN(price) || price <= 0) {
+        showNotification('El precio debe ser mayor que cero.', 'error');
+        return;
+    } else if (isNaN(stock) || stock < 0) {
+        showNotification('El stock no puede ser negativo.', 'error');
+        return;
+    }
+
     try {
-        await fetch(`${API_BASE_URL}/crearProducto`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, category, price, stock }) });
-        showNotification('Producto creado'); closeModal(); fetchProductos();
+        await fetch(`${API_BASE_URL}/crearProducto`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, category, price, stock })
+        });
+        showNotification('Producto creado', 'success');
+        closeModal();
+        fetchProductos();
     } catch {
         showNotification('Error al crear', 'error');
     }
 }
-
 async function updateProduct() {
     const name = document.getElementById('formName').value.trim();
     const category = document.getElementById('formCategory').value.trim();
     const price = parseFloat(document.getElementById('formPrice').value);
     const stock = parseInt(document.getElementById('formStock').value);
-    if (!name || !category || isNaN(price) || price <= 0 || isNaN(stock) || stock < 0) { showNotification('Complete correctamente los campos', 'error'); return; }
+    if (!name) {
+        showNotification('El nombre del producto es obligatorio.', 'error');
+        return;
+    } else if (!category) {
+        showNotification('La categoría del producto es obligatoria.', 'error');
+        return;
+    } else if (isNaN(price) || price <= 0) {
+        showNotification('El precio debe ser mayor que cero.', 'error');
+        return;
+    } else if (isNaN(stock) || stock < 0) {
+        showNotification('El stock no puede ser negativo.', 'error');
+        return;
+    }
     try {
         await fetch(`${API_BASE_URL}/actualizarProducto/${state.selected.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, category, price, stock }) });
-        showNotification('Producto actualizado'); closeModal(); fetchProductos();
+        showNotification('Producto actualizado', "success"); closeModal(); fetchProductos();
     } catch {
         showNotification('Error al actualizar', 'error');
     }
