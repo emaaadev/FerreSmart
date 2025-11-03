@@ -168,7 +168,7 @@ function renderTable() {
               <td class="px-6 py-4">
                 <div class="flex gap-2 group-hover:opacity-100 transform group-hover:translate-x-0 transition-all">
                   <button class="p-1.5 rounded" onclick="openModal('edit', ${p.id})"><i data-lucide='edit-2' class='h-4 w-4'></i></button>
-                  <button class="p-1.5 rounded text-red-600" onclick="openModal('delete', ${p.id})"><i data-lucide='trash-2' class='h-4 w-4'></i></button>
+                  <button class="p-1.5 rounded text-red-600" onclick="openModal('delete', ${p.id})"><i data-lucide='trash-2' class='h-4 w-4 text-black'></i></button>
                 </div>
               </td>
             </tr>
