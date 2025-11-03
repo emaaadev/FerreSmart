@@ -166,9 +166,9 @@ function renderTable() {
                 <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${p.stock > 10 ? 'bg-green-100 text-green-800' : p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">${p.stock}</span>
               </td>
               <td class="px-6 py-4">
-                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-0 transition-all">
-                  <button class="p-1.5 hover:bg-gray-100 rounded" onclick="openModal('edit', ${p.id})"><i data-lucide='edit-2' class='h-4 w-4'></i></button>
-                  <button class="p-1.5 hover:bg-red-50 rounded text-red-600" onclick="openModal('delete', ${p.id})"><i data-lucide='trash-2' class='h-4 w-4'></i></button>
+                <div class="flex gap-2 group-hover:opacity-100 transform group-hover:translate-x-0 transition-all">
+                  <button class="p-1.5 rounded" onclick="openModal('edit', ${p.id})"><i data-lucide='edit-2' class='h-4 w-4'></i></button>
+                  <button class="p-1.5 rounded text-red-600" onclick="openModal('delete', ${p.id})"><i data-lucide='trash-2' class='h-4 w-4'></i></button>
                 </div>
               </td>
             </tr>
@@ -254,9 +254,6 @@ document.getElementById('searchForm').addEventListener('submit', (e) => { e.prev
 document.getElementById('addBtn').addEventListener('click', () => openModal('add'));
 
 // Popover filtros
-const filterBtn = document.getElementById('filterBtn');
-const filterPopover = document.getElementById('filterPopover');
-filterBtn.addEventListener('click', () => filterPopover.classList.toggle('hidden'));
 
 // Init
 fetchProductos();
