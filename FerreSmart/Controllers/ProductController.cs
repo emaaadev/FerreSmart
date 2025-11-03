@@ -1,4 +1,5 @@
-﻿using FerreSmart.Context;
+﻿using System.Text.Json;
+using FerreSmart.Context;
 using FerreSmart.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +42,64 @@ namespace FerreSmart.Controllers
             }
 
         }
+
+        [HttpGet]
+        [Route("buscarProducto/{termino}")] /* Hecho por: Euriel Mateo 3-11-2025 5:36am */
+        public async Task<ActionResult> BuscarProducto(string termino)
+        {
+            try
+            {
+                if
+                    (string.IsNullOrWhiteSpace(termino))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "El termino de busqueda no puede estar vacio."
+                    });
+                }
+
+
+                string terminoLower = termino.ToLower();
+                var productos = await _context.Product
+                    .Where(p => p.name!.ToLower().Contains(terminoLower) ||
+                                p.category!.ToLower().Contains(terminoLower))
+                    .ToListAsync();
+
+                if (productos.Count == 0)
+                {
+                    return Ok(new
+                    {
+                        success = true,
+                        message = "No se encontraron productos que coincidan con el termino.",
+                        data = new List<ProductModel>(),
+                        total = 0,
+                        busqueda = termino
+
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Productos encontrados.",
+                    data = productos,
+                    total = productos.Count,
+                    busqueda = termino
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al buscar productos: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Ocurrio un error al buscar los productos.",
+                    error = ex.Message
+                });
+            }
+        }
+
 
         [HttpPost]   /* Hecho por: Emanuel  3-11-2025  2:50am */
         [Route("crearProducto")]
@@ -105,8 +164,6 @@ namespace FerreSmart.Controllers
                 });
             }
         }
-<<<<<<< Updated upstream
-=======
 
         [HttpPut] /* Hecho por: Wandrys Ferrand  3-11-2025 3:49am*/
         [Route("actualizarProducto/{id}")]
@@ -211,8 +268,6 @@ namespace FerreSmart.Controllers
                 });
             }
         }
-
-
         [HttpDelete]   /* Hecho por: Rubby Keyther Martinez Z.  3-11-2025  5:51am */
         [Route("eliminarProducto/{id}")]
         public async Task<IActionResult> EliminarProducto(int id)
@@ -256,19 +311,5 @@ namespace FerreSmart.Controllers
                 });
             }
         }
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     }
 }
