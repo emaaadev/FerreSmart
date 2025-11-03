@@ -265,6 +265,50 @@ namespace FerreSmart.Controllers
                 });
             }
         }
+
+        [HttpDelete]   /* Hecho por: Rubby Keyther Martinez Z.  3-11-2025  5:51am */
+        [Route("eliminarProducto/{id}")]
+        public async Task<IActionResult> EliminarProducto(int id)
+        {
+            try
+            {
+                // Validar que el ID sea válido
+                if (id <= 0)
+                {
+                    return BadRequest(new { success = false, message = "El ID del producto no es válido." });
+                }
+
+                // Buscar el producto en la base de datos
+                var product = await _context.Product.FindAsync(id);
+
+                // Verificar si el producto existe
+                if (product == null)
+                {
+                    return NotFound(new { success = false, message = "El producto no existe." });
+                }
+
+                // Eliminar el producto
+                _context.Product.Remove(product);
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Producto eliminado correctamente.",
+                    data = product
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar el producto: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Ocurrió un error al eliminar el producto.",
+                    error = ex.Message
+                });
+            }
+        }
     }
 }
 
