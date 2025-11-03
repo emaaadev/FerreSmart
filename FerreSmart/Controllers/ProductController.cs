@@ -1,4 +1,5 @@
-﻿using FerreSmart.Context;
+﻿using System.Text.Json;
+using FerreSmart.Context;
 using FerreSmart.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -105,5 +106,110 @@ namespace FerreSmart.Controllers
                 });
             }
         }
+
+        [HttpPut] /* Hecho por: Wandrys Ferrand  3-11-2025 3:49am*/
+        [Route("actualizarProducto/{id}")]
+        public async Task<IActionResult> ActualizarProducto(int id, [FromBody] ProductModel request)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    return BadRequest(new { success = false, message = "Debe enviar los datos del producto a actualizar." });
+                }
+
+                // Buscar el producto existente en la BD
+                var existingProduct = await _context.Product.FindAsync(id);
+
+                if (existingProduct == null)
+                {
+                    return NotFound(new { success = false, message = "No se encontro el producto con el ID especificado." });
+                }
+
+                // Actualizar los campos
+                existingProduct.name = request.name ?? existingProduct.name;
+                existingProduct.category = request.category ?? existingProduct.category;
+                existingProduct.price = request.price > 0 ? request.price : existingProduct.price;
+                existingProduct.stock = request.stock >= 0 ? request.stock : existingProduct.stock;
+
+                // Guardar los cambios
+                _context.Product.Update(existingProduct);
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Producto actualizado correctamente.",
+                    data = existingProduct
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al actualizar el producto: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Ocurrio un error al actualizar el producto.",
+                    error = ex.Message
+                });
+            }
+        }
+
+        [HttpPatch] /* Hecho por: Wandrys Ferrand  3-11-2025 4:47am*/
+        [Route("actualizarAutomaticamente/{id}")]
+        public async Task<IActionResult> ActualizarAutomaticamente(int id, [FromBody] JsonElement changes)
+        {
+            try
+            {
+                // Buscar producto en la base de datos
+                var product = await _context.Product.FindAsync(id);
+                if (product == null)
+                {
+                    return NotFound(new { success = false, message = "No se encontro el producto para actualizar automaticamente." });
+                }
+
+                // Actualizacion de campos solo si existen en el JSON y son validos
+                if (changes.TryGetProperty("name", out JsonElement name) && !string.IsNullOrWhiteSpace(name.GetString()))
+                {
+                    product.name = name.GetString();
+                }
+
+                if (changes.TryGetProperty("category", out JsonElement category) && !string.IsNullOrWhiteSpace(category.GetString()))
+                {
+                    product.category = category.GetString();
+                }
+
+                if (changes.TryGetProperty("price", out JsonElement price) && price.TryGetDecimal(out decimal priceValue) && priceValue > 0)
+                {
+                    product.price = priceValue;
+                }
+
+                if (changes.TryGetProperty("stock", out JsonElement stock) && stock.TryGetInt32(out int stockValue) && stockValue >= 0)
+                {
+                    product.stock = stockValue;
+                }
+
+                // Guardar cambios
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Producto actualizado automaticamente.",
+                    data = product
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en actualizacion automatica: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Ocurrio un error en la actualizacion automatica.",
+                    error = ex.Message
+                });
+            }
+        }
     }
 }
+
