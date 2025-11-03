@@ -1,0 +1,124 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FerreSmart — UI Mejorado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Pequeñas utilidades que Tailwind no cubre directamente en CDN mode */
+        .smooth-transition {
+            transition: all 200ms cubic-bezier(.4,.0,.2,1);
+        }
+        /* Evitar seleccionar texto en iconos clicables */
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-800 antialiased">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <div class="bg-gray-900 p-2 rounded-lg shadow-sm transform transition-transform duration-200 hover:scale-105">
+                        <i data-lucide="package" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-semibold tracking-tight">FerreSmart</h1>
+                        <p class="text-xs text-gray-500">Gestión de Inventario</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <i data-lucide="clock" class="w-4 h-4 text-gray-500"></i>
+                        <span class="text-sm text-gray-600">Última actualización: <span id="lastUpdate">—</span></span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notificación -->
+    <div id="notification" class="fixed top-5 right-5 z-50 transform translate-x-6 opacity-0 pointer-events-none">
+        <div class="max-w-xs bg-white border border-gray-200 rounded-lg px-4 py-3 shadow-lg flex items-center gap-3 smooth-transition">
+            <i id="notificationIcon" data-lucide="check" class="w-5 h-5 text-green-600"></i>
+            <div class="flex-1">
+                <p id="notificationMsg" class="text-sm font-medium text-gray-800">Mensaje</p>
+            </div>
+            <button id="notificationClose" class="text-gray-400 hover:text-gray-600 focus:outline-none"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Buscador y acciones -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <form id="searchForm" class="flex-1 flex items-center gap-3">
+                    <label for="searchInput" class="sr-only">Buscar producto</label>
+                    <div class="flex items-center w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-gray-900 transition-shadow">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-500"></i>
+                        <input id="searchInput" type="text" placeholder="Buscar producto, categoría o ID..." class="flex-1 bg-transparent px-3 py-2 text-sm focus:outline-none" />
+                        <button id="clearSearch" type="button" class="opacity-0 translate-x-2 pointer-events-none smooth-transition"><i data-lucide="x" class="w-4 h-4 text-gray-400"></i></button>
+                    </div>
+                </form>
+
+                <div class="flex items-center gap-3">
+                    <button id="addBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:shadow-md transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-900 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Nuevo Producto
+                    </button>
+
+                    <div class="relative">
+                        <button id="filterBtn" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-900">
+                            <i data-lucide="sliders" class="w-4 h-4"></i>
+                        </button>
+                        <!-- Popover simple -->
+                        <div id="filterPopover" class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-sm p-3">
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="onlyLow" /> Sólo bajo stock</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200" id="productsTable">
+                    <thead class="bg-white sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="bg-white divide-y divide-gray-100 text-sm text-gray-700">
+                        <tr><td colspan="6" class="px-6 py-12 text-center text-gray-400">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal genérico -->
+    <div id="modalContainer" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4" aria-hidden="true">
+        <!-- Contenido se inyecta desde JS -->
+    </div>
+
+    <script src="scripts.js"></script>
+       
+</body>
+</html>
